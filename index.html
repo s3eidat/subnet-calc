@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self' blob:; manifest-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Subnet Calc — Free IPv4 &amp; IPv6 Subnet Calculator, VLSM Splitter | S3eidat Tools</title>
+<meta name="description" content="IPv4 and IPv6 subnet calculator: network, broadcast, host range, mask, wildcard, binary view, private/reserved detection, split into subnets or VLSM, check if an IP is in a range. Free, private, runs in your browser.">
+<meta property="og:title" content="Subnet Calc — free IPv4 &amp; IPv6 subnet calculator">
+<meta property="og:description" content="CIDR math, VLSM splitting and IPv6 prefixes. Runs 100% in your browser.">
+<link rel="icon" href="kit/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="kit/kit.css">
+<link rel="stylesheet" href="app.css">
+<script src="kit/kit.js"></script>
+<!--s3:seo-->
+<link rel="canonical" href="https://s3eidat.github.io/subnet-calc/">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0f12">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="S3eidat Tools">
+<meta property="og:url" content="https://s3eidat.github.io/subnet-calc/">
+<meta property="og:image" content="https://s3eidat.github.io/subnet-calc/screenshot.png">
+<meta property="og:image:width" content="1280"><meta property="og:image:height" content="800">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Subnet Calc — IPv4 and IPv6 subnet calculator">
+<meta name="twitter:description" content="IPv4 and IPv6 subnet calculator. Free, private and runs 100% in your browser: no sign-up, no uploads.">
+<meta name="twitter:image" content="https://s3eidat.github.io/subnet-calc/screenshot.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Subnet Calc", "url": "https://s3eidat.github.io/subnet-calc/", "description": "IPv4 and IPv6 subnet calculator. Free, private and runs 100% in your browser: no sign-up, no uploads.", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (web browser)", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://s3eidat.github.io/subnet-calc/screenshot.png", "author": {"@type": "Person", "name": "s3eidat", "url": "https://github.com/s3eidat"}}</script>
+<!--/s3:seo-->
+</head>
+<body data-tool="subnet-calc">
+<main class="s3-main">
+  <section class="s3-hero">
+    <h1>Subnet Calc</h1>
+    <p>IPv4 and IPv6 subnet math: ranges, masks, binary view, VLSM splitting and range checks. Everything is calculated in your browser.</p>
+  </section>
+
+  <section class="card stack">
+    <div class="row between">
+      <h2>IPv4 network</h2>
+      <div class="row">
+        <button class="btn ghost small" id="sample">Sample</button>
+        <button class="btn ghost small" id="clear">Clear</button>
+      </div>
+    </div>
+    <div class="row sn-inrow">
+      <label class="field grow">IP address, CIDR or IP + mask
+        <input class="input mono" id="ip" spellcheck="false" autocomplete="off" placeholder="192.168.1.0/26  or  10.0.0.5 255.255.255.0">
+      </label>
+      <label class="field sn-mask">Prefix / mask
+        <select class="select mono" id="mask"></select>
+      </label>
+    </div>
+    <div class="row"><span class="chip" id="v4status">Type an IPv4 address</span><span class="faint" id="v4note"></span></div>
+    <div class="sn-res" id="v4res"></div>
+    <div class="sn-bin out" id="v4bin" hidden></div>
+    <div class="row" id="v4actions" hidden>
+      <button class="btn small" id="v4copy"><svg class="i"><use href="#i-copy"/></svg>Copy summary</button>
+    </div>
+  </section>
+
+  <section class="card stack mt">
+    <div class="row between">
+      <h2>Split the network</h2>
+      <div class="seg" id="splitmode" role="group" aria-label="Split mode">
+        <button aria-pressed="true" data-v="n">Into N equal subnets</button>
+        <button aria-pressed="false" data-v="vlsm">By host counts (VLSM)</button>
+      </div>
+    </div>
+    <div class="row sn-inrow" id="nrow">
+      <label class="field">Number of subnets
+        <input class="input mono" id="nsub" type="number" min="1" max="65536" value="4">
+      </label>
+      <span class="faint grow" id="nnote"></span>
+    </div>
+    <div class="row sn-inrow" id="vrow" hidden>
+      <label class="field grow"><span>Hosts needed, comma separated. Optional names: <code>Sales:50, HR:20</code></span>
+        <input class="input mono" id="vlsm" spellcheck="false" autocomplete="off" value="Sales:50, Office:20, Lab:10, Link:2">
+      </label>
+    </div>
+    <div class="tbl-wrap sn-split" id="split"></div>
+    <div class="row">
+      <button class="btn small" id="splitcopy"><svg class="i"><use href="#i-copy"/></svg>Copy table</button>
+      <button class="btn small" id="splitsave"><svg class="i"><use href="#i-download"/></svg>.csv</button>
+      <span class="faint" id="splitinfo"></span>
+    </div>
+  </section>
+
+  <section class="card stack mt">
+    <h2>Is this IP in the range?</h2>
+    <div class="row sn-inrow">
+      <label class="field grow">IP address (v4 or v6)
+        <input class="input mono" id="chkip" spellcheck="false" autocomplete="off" value="192.168.1.40">
+      </label>
+      <label class="field grow">Range: CIDR, start - end, or one IP
+        <input class="input mono" id="chkrange" spellcheck="false" autocomplete="off" value="192.168.1.0/26">
+      </label>
+    </div>
+    <div class="row"><span class="chip" id="chkres">—</span><span class="faint" id="chknote"></span></div>
+  </section>
+
+  <section class="card stack mt">
+    <h2>IPv6</h2>
+    <label class="field">IPv6 address with optional prefix
+      <input class="input mono" id="v6" spellcheck="false" autocomplete="off" placeholder="2001:db8::1/48">
+    </label>
+    <div class="row"><span class="chip" id="v6status">Type an IPv6 address</span></div>
+    <div class="sn-res sn-res6" id="v6res"></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
